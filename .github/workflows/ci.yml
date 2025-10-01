@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.10.14
+    
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            .cache/pip
+            .cache/poetry
+            .venv
+          key: poetry-${{ hashFiles('poetry.lock', '.github/workflows/ci.yml') }}
+          restore-keys: |
+            poetry-
+      
+      - name: Install Poetry
+        run: pip install poetry==1.8.3
+      
+      - name: Configure Poetry
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry config cache-dir .cache/poetry
+          poetry config --list
+      
+      - name: Export requirements
+        run: poetry export -f requirements.txt --output requirements.txt --without-hashes
+      
+      - name: Install dependencies
+        run: poetry install
+      
+      - name: Install lint dependencies
+        run: poetry install --with lint
+      
+      - name: Run ruff check
+        run: poetry run ruff check
+
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.10.14
+    
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            .cache/pip
+            .cache/poetry
+            .venv
+          key: poetry-${{ hashFiles('poetry.lock', '.github/workflows/ci.yml') }}
+          restore-keys: |
+            poetry-
+      
+      - name: Install Poetry
+        run: pip install poetry==1.8.3
+      
+      - name: Configure Poetry
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry config cache-dir .cache/poetry
+          poetry config --list
+      
+      - name: Export requirements
+        run: poetry export -f requirements.txt --output requirements.txt --without-hashes
+      
+      - name: Install dependencies
+        run: poetry install
+      
+      - name: Install test dependencies
+        run: poetry install --with test
+      
+      - name: Run pytest
+        run: poetry run pytest
