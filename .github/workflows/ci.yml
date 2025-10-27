@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    container: python:3.10.14
+    
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.cache/pypoetry
+          key: ${{ runner.os }}-pip-poetry-${{ hashFiles('**/poetry.lock', '.github/workflows/ci.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-poetry-
+      
+      - name: Install Poetry
+        run: pip install poetry==1.8.3
+      
+      - name: Configure Poetry
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry config --list
+      
+      - name: Install dependencies with lint group
+        run: poetry install --with lint
+      
+      - name: Run ruff check
+        run: poetry run ruff check
+
+  test:
+    runs-on: ubuntu-latest
+    container: python:3.10.14
+    
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.cache/pypoetry
+          key: ${{ runner.os }}-pip-poetry-${{ hashFiles('**/poetry.lock', '.github/workflows/ci.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-poetry-
+      
+      - name: Install Poetry
+        run: pip install poetry==1.8.3
+      
+      - name: Configure Poetry
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry config --list
+      
+      - name: Install dependencies with test group
+        run: poetry install --with test
+      
+      - name: Run pytest
+        run: poetry run pytest
